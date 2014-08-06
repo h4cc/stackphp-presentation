@@ -49,18 +49,6 @@ Julius Beckmann
 \end{multicols}
 
 
-# 
-\centering
-
-![](img/silpion_logo_2014_with_dpi.png)
-
-[Sommerfest am 12.09.2014!](http://www.silpion.de/wir/veranstaltungen/sommerfest) 
-
-Anmeldung unter __[www.solutionscamp.de](http://www.solutionscamp.de/)__
-
-Ihr seid natürlich alle eingeladen! :D
-
-
 #
 
 ![](img/stack_website_with_dpi.png)
