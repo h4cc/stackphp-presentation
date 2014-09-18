@@ -1,79 +1,107 @@
 
 
-# Symfony UserGroup Hamburg
+#
 
-![](img/symfony_logo.png)
+![](img/logo_phpunconference_2014_with_dpi.jpg)
 
-
+ 
 # Lets talk about ...
 \centering
 
 ![](img/stack_logo_with_dpi.png)
 
-`"Do you stack up?"`
+`and the idea behind PSR-7`
 
 
 # About me
 \centering
 
+Hi, i'm
+\begin{huge}
 Julius Beckmann
-
-(twitter|github).com/__h4cc__
+\end{huge}
 
 \vspace{0.5cm}
+and i work at
+
+![](img/silpion_logo_2014_with_dpi.png)
+
+
+
+#
+
+\centering
+\begin{Huge}
+How does PHP work?
+\end{Huge}
+
+
+# 
+
+\centering
+
+```php
+<?php
+
+// The whole request
+// var_dump(
+//     $_GET, $_POST, $_SERVER,
+//     $_FILES, $_COOKIES, $_SESSION
+// );
+
+// Creating a response
+header("HTTP/1.1 404 Not Found"); 
+echo "Not found";
+exit;
+```
+
+
+# 
+
+__PHP SAPI__ - _Server Application Programming Interface_
+
+\vspace{0.5cm}
+Gives us:
+
 \begin{multicols}{2}
 	\begin{itemize}
-		\item PHP
+		\item Superglobals
 		\begin{itemize}
-			\item Symfony
-			\item Silex
+			\item \texttt{\$\_GET}
+			\item \texttt{\$\_POST}
+			\item \texttt{\$\_SERVER}
+			\item ...
 		\end{itemize}
-	\vspace{0.5cm}
-		\item BEAM
+		\item Primitives
 		\begin{itemize}
-			\item Erlang
-			\item Elixir
-		\end{itemize}
-		\item DevOps
-		\begin{itemize}
-			\item Server
-			\item Deployment
-		\end{itemize}
-	\vspace{0.5cm}
-		\item Pandoc
-		\begin{itemize}
-			\item Markdown
-			\item \LaTeX
+			\item \texttt{header()}
+			\item \texttt{echo()}
+			\item \texttt{exit()}
+			\item ...
 		\end{itemize}
 	\end{itemize}
 \end{multicols}
 
+# PHP-SAPI Problems
+
+ * Global state
+ * Hard to inspect / debug
+ * Hard to reproduce / test
+
 
 #
 
-![](img/stack_website_with_dpi.png)
-
-
-#
 \centering
+\begin{Huge}
+Lets do it better!
+\end{Huge}
 
-![](img/stack_who_with_dpi.png)
-
-
-# Modularization in Frameworks
-
-![](img/how_frameworks_modularize_with_dpi.png)
-
-
-# Inside the Frameworks
-
-![](img/modularized_app_with_dpi.png)
 
 
 #
 \centering
 \begin{Huge}
-HTTP!
+HTTP
 \end{Huge}
 
 `A protocol is a interface.`
@@ -107,6 +135,72 @@ interface HttpKernelInterface
 
 ```
 
+
+# Why use HttpKernelInterface?
+
+`Request`, `AppKernel` and `Response` are **values**.
+
+* Inspectable
+* Reuseable
+* Composeable
+
+\vspace{1cm}
+
+PHP SAPI is **global state**.
+
+* *Nothing of the above*
+
+
+# Its nothing new ...
+
+* 1997: Java Servlet
+* 2003: Python WSGI *(Web Server Gateway Interface)*
+* 2007: Ruby Rack
+* 2009: Perl PSGI/Plack
+* 2011: Symfony HttpKernelInterface
+* ????: _PSR-7: HTTP message interfaces_
+
+$\to$ Idea is more than *17 Years* around, lets use it!
+
+
+#
+\centering
+\begin{Huge}
+Leverage
+
+\NormalTok{HttpKernelInterface}
+
+using StackPHP
+\end{Huge}
+
+
+#
+
+![](img/stack_website_with_dpi.png)
+
+
+#
+\centering
+
+![](img/stack_who_with_dpi.png)
+
+
+#
+
+Needed composer packages:
+
+\centering
+
+```
+{
+    "require": {
+        "symfony/http-kernel": "~2.0",
+        "symfony/http-foundation": "~2.0"
+    }
+}
+```
+
+
 # Example HttpKernelInterface usage
 
 \footnotesize
@@ -116,20 +210,27 @@ interface HttpKernelInterface
 
 $kernel = new AppKernel('dev', true);
 
-$kernel->handle(Request::createFromGlobals())
-       ->send();
+$response = $kernel->handle(Request::createFromGlobals());
+
+$response->send();
 ```
 
-# Base of Stack
+#
 
 \centering
 \Huge
-_Request_ $\to$ __App__ $\to$ _Response_
+_Request_
+$\to$ 
+
+__AppKernel__ 
+
+$\to$
+_Response_
 
 \normalsize
 \vspace{1cm}
 
-`App extends HttpKernelInterface`
+`AppKernel extends HttpKernelInterface`
 
 
 # How would you ....
@@ -137,7 +238,7 @@ _Request_ $\to$ __App__ $\to$ _Response_
 \centering
 \Huge
 
-restrict Access to \newline your App by IP?
+restrict Access by IP?
 
 
 # With IpRestrict by Alsar
@@ -154,8 +255,9 @@ $kernel = new Alsar\Stack\IpRestrict(
 	array('127.0.0.1', '192.168.0.1')
 );
 
-$kernel->handle(Request::createFromGlobals())
-       ->send();
+$response = $kernel->handle(Request::createFromGlobals());
+
+$response->send();
 ```
 
 \large
@@ -164,8 +266,8 @@ $kernel->handle(Request::createFromGlobals())
 
 
 
-
-# With IpRestrict by Alsar
+<!--
+# Source of IpRestrict
 
 \tiny
 
@@ -199,6 +301,7 @@ class IpRestrict implements HttpKernelInterface
 \large
 
 [https://github.com/alsar/stack-ip-restrict](https://github.com/alsar/stack-ip-restrict)
+-->
 
 
 # Principle of Stack
@@ -209,53 +312,30 @@ class IpRestrict implements HttpKernelInterface
 _Request_
 $\to$ 
 
-__AnotherApp(App)__ 
+__DecoratingApp(App)__ 
 
 $\to$
 _Response_
 
 
-# Wait, how did we do this till now?
+# StackPHP is ...
 
-__PHP SAPI__ - _Server Application Programming Interface_
+\LARGE
 
-\vspace{0.5cm}
-Gives us:
+StackPHP is __NOT__ a Framework
 
-* Superglobals
-	* `$_REQUEST`
-	* `$_SERVER`
-	
-* Primitives
-	* `header()`
-	* `echo()`
-	* `exit()`
+StackPHP is __NOT__ a Library
 
-	
-# Why use HttpKernelInterface?
-
-`Request`, `App` and `Response` are **values**.
-
-* Inspectable
-* Reuseable
-* Composeable
-
-\vspace{1cm}
-
-PHP SAPI is **global state**.
-
-* *Nothing of the above*
+StackPHP is a Toolset and Conventions
 
 
-# Its nothing new ...
+# StackPHP Conventions
 
-* 1997: Java Servlet
-* 2003: Python WSGI *(Web Server Gateway Interface)*
-* 2007: Ruby Rack
-* 2009: Perl PSGI/Plack
-* 2011: Symfony HttpKernelInterface
+1. Implement the __HttpKernelInterface__
+2. Take the decorated app as the __first constructor argument__
+3. __Decorate__ the handle call, __delegate__ to the decorated app
 
-$\to$ Idea is more than *17 Years* around, lets use it!
+__More__ can be found here: _[stackphp.com/specs](http://stackphp.com/specs/)_.
 
 
 # Lets check out the toolbox!
@@ -267,6 +347,7 @@ $\to$ Idea is more than *17 Years* around, lets use it!
 * Session
 * URL Map
 * Lazy Kernel
+
 
 
 # Toolbox: Builder
@@ -333,8 +414,7 @@ $app->get('/', function (Request $request) {
 
 $stack = (new Stack\Builder())->push('Stack\Session');
     
-$app = $stack->resolve($app);
-Stack\run($app);
+Stack\run($stack->resolve($app));
 ```
 
 
@@ -355,8 +435,7 @@ $map = array(
 
 $app = (new Stack\Builder())->push('Stack\UrlMap', $map)
 
-$app = $stack->resolve($app);
-Stack\run($app);
+Stack\run($stack->resolve($app));
 ```
 
 
@@ -387,12 +466,48 @@ $map = array(
 
 # Middlewares
 
+Adding functionality by decorating Application.
+
 \centering
 
 ![](img/clack-middleware_with_dpi.png)
 
-* Adding functionality.
-* Decorating Application.
+
+# Example Middleware
+
+\centering
+
+\tiny
+
+```php
+<?php
+
+class MyMiddleware implements HttpKernelInterface
+{
+    private $app;
+
+    public function __construct(HttpKernelInterface)
+    {
+        $this->app = $app;
+    }
+
+    public function handle(Request $request, $type = self::MASTER_REQUEST, $catch = true)
+    {
+        // Before request
+        
+        $response = $this->app->handle($request, $type, $catch);
+        
+        // After response
+        
+        return $response;
+    }
+}
+```
+
+
+# What the Stack logo means
+
+![](img/stack_logo_explained_with_dpi.png)
 
 
 # List of middlewares
@@ -443,6 +558,92 @@ $map = array(
 \end{multicols}
 
 
+
+# What about PSR-7 ?
+
+StackPHP is currently using `symfony` packages.
+
+\vspace{0.5cm}
+
+A equal PSR-Standard is proposed, but not yet ready :(
+
+But let me show you the drafts...
+
+
+# PSR-7 MessageInterface DRAFT
+
+Base for `Request` and `Response` 
+
+\centering
+\tiny
+
+```php
+<?php
+
+namespace Psr\Http\Message;
+
+interface MessageInterface
+{
+    public function getProtocolVersion();
+    
+    public function getBody();
+    public function setBody(StreamInterface $body = null);
+    
+    public function getHeaders();
+    public function hasHeader($header);
+    public function getHeader($header);
+    public function getHeaderAsArray($header);
+    public function setHeader($header, $value);
+    public function setHeaders(array $headers);
+    public function addHeader($header, $value);
+    public function addHeaders(array $headers);
+    public function removeHeader($header);
+}
+```
+
+
+# PSR-7 RequestInterface DRAFT
+
+\centering
+\tiny
+
+```php
+<?php
+
+namespace Psr\Http\Message;
+
+interface RequestInterface extends MessageInterface
+{
+    public function getMethod();
+    public function setMethod($method);
+
+    public function getUrl();
+    public function setUrl($url);
+}
+```
+
+# PSR-7 ResponseInterface DRAFT
+
+\centering
+\tiny
+
+```php
+<?php
+
+namespace Psr\Http\Message;
+
+interface ResponseInterface extends MessageInterface
+{
+    public function getStatusCode();
+    public function setStatusCode($code);
+
+    public function getReasonPhrase();
+    public function setReasonPhrase($phrase);
+}
+```
+
+
+<!--
 # Divine the future
 
 One day, using StackPHP we will:
@@ -454,21 +655,38 @@ One day, using StackPHP we will:
 * Have single-purpose-application, decorated to our needs.
 
 * even interact with external services using HttpKernelInterface.
+-->
 
 
 # Summary
 
-* Using Http as a interface with HttpKernelInterface.
+* Using __Http as a interface__ with HttpKernelInterface.
 
-* Decorating Apps is easy.
+* __Compose__ simple Applications.
 
-* Writing own HttpKernel wrapper is easy.
+* Add functionality through __Middlewares__.
 
-* Nice Toolbox available.
-
-* Public Middleware available
+* Build __framework-agnostic features__ based on HTTP.
 
 
+# Some stuff i did with StackPHP
+
+* Request/Response logger: __[silpion/stack-logger](https://github.com/h4cc/StackLogger)__
+
+
+* REST fileserver application: __[h4cc/stack-flysystem](https://github.com/h4cc/stack-flysystem)__
+
+
+* StackPHP adapter for [Mongrel2](http://mongrel2.org/): __[h4cc/stack-mongrel2](https://github.com/h4cc/stack-mongrel2)__
+
+
+* [ReactPHP](http://reactphp.org/) StackPHP Handler: __[yosymfony/httpserver](https://github.com/yosymfony/HttpServer)__
+
+
+* _More not yet released stuff ..._
+
+
+<!--
 # 
 \centering
 
@@ -478,6 +696,45 @@ Stop writing Bundles.
 \vspace{1cm}
 
 Start writing Middlewares!
+-->
+
+
+# About me
+\centering
+
+Julius Beckmann
+
+(twitter|github).com/__h4cc__
+
+\vspace{0.5cm}
+\begin{multicols}{2}
+	\begin{itemize}
+		\item PHP
+		\begin{itemize}
+			\item Symfony
+			\item Silex
+		\end{itemize}
+	\vspace{0.5cm}
+		\item BEAM
+		\begin{itemize}
+			\item Erlang
+			\item Elixir
+		\end{itemize}
+		\item DevOps
+		\begin{itemize}
+			\item Server
+			\item Deployment
+		\end{itemize}
+	\vspace{0.5cm}
+		\item Pandoc
+		\begin{itemize}
+			\item Markdown
+			\item \LaTeX
+		\end{itemize}
+	\end{itemize}
+\end{multicols}
+
+
 
 #
 

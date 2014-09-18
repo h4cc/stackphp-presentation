@@ -6,7 +6,7 @@ compile:
 	bash -i -c "pandoc --standalone -f markdown -t beamer -V theme:default --highlight-style=tango -o presentation.pdf --include-in-header preamble.tex presentation.md"
 
 show:
-	evince presentation.pdf
+	evince presentation.pdf &
 
 watch:
 	while true; do \
