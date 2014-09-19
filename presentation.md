@@ -13,7 +13,7 @@
 `and the idea behind PSR-7`
 
 
-# About me
+#
 \centering
 
 Hi, i'm
@@ -32,7 +32,9 @@ and i work at
 
 \centering
 \begin{Huge}
-How does PHP work?
+Request/Response
+
+in PHP
 \end{Huge}
 
 
@@ -46,7 +48,7 @@ How does PHP work?
 // The whole request
 // var_dump(
 //     $_GET, $_POST, $_SERVER,
-//     $_FILES, $_COOKIES, $_SESSION
+//     $_FILES, $_COOKIES
 // );
 
 // Creating a response
@@ -135,6 +137,27 @@ interface HttpKernelInterface
 
 ```
 
+# Example HttpKernelInterface usage
+
+\footnotesize
+
+```php
+<?php
+
+class AppKernel implements HttpKernelInterface
+{
+	public function handle(Request $request) {
+		return new Response('Hello World');
+	}
+}
+
+$kernel = new AppKernel();
+
+$response = $kernel->handle(Request::createFromGlobals());
+
+$response->send();
+```
+
 
 # Why use HttpKernelInterface?
 
@@ -158,7 +181,6 @@ PHP SAPI is **global state**.
 * 2007: Ruby Rack
 * 2009: Perl PSGI/Plack
 * 2011: Symfony HttpKernelInterface
-* ????: _PSR-7: HTTP message interfaces_
 
 $\to$ Idea is more than *17 Years* around, lets use it!
 
@@ -175,6 +197,7 @@ using StackPHP
 
 
 #
+\centering
 
 ![](img/stack_website_with_dpi.png)
 
@@ -184,138 +207,6 @@ using StackPHP
 
 ![](img/stack_who_with_dpi.png)
 
-
-#
-
-Needed composer packages:
-
-\centering
-
-```
-{
-    "require": {
-        "symfony/http-kernel": "~2.0",
-        "symfony/http-foundation": "~2.0"
-    }
-}
-```
-
-
-# Example HttpKernelInterface usage
-
-\footnotesize
-
-```php
-<?php
-
-$kernel = new AppKernel('dev', true);
-
-$response = $kernel->handle(Request::createFromGlobals());
-
-$response->send();
-```
-
-#
-
-\centering
-\Huge
-_Request_
-$\to$ 
-
-__AppKernel__ 
-
-$\to$
-_Response_
-
-\normalsize
-\vspace{1cm}
-
-`AppKernel extends HttpKernelInterface`
-
-
-# How would you ....
-
-\centering
-\Huge
-
-restrict Access by IP?
-
-
-# With IpRestrict by Alsar
-
-\footnotesize
-
-```php
-<?php
-
-$kernel = new AppKernel('dev', true);
-
-$kernel = new Alsar\Stack\IpRestrict(
-	$kernel, 
-	array('127.0.0.1', '192.168.0.1')
-);
-
-$response = $kernel->handle(Request::createFromGlobals());
-
-$response->send();
-```
-
-\large
-
-[https://github.com/alsar/stack-ip-restrict](https://github.com/alsar/stack-ip-restrict)
-
-
-
-<!--
-# Source of IpRestrict
-
-\tiny
-
-```php
-<?php
-
-class IpRestrict implements HttpKernelInterface
-{
-    private $app;
-    private $allowedIps;
-
-    public function __construct(HttpKernelInterface $app, array $allowedIps)
-    {
-        $this->app = $app;
-        $this->allowedIps = $allowedIps;
-    }
-
-    public function handle(Request $request, $type = self::MASTER_REQUEST, $catch = true)
-    {
-        $ip = $request->getClientIp();
-
-        if (!in_array($ip, $this->allowedIps)) {
-            return new Response(sprintf('IP %s is not allowed.', $ip), 403);
-        }
-
-        return $this->app->handle($request, $type, $catch);
-    }
-}
-```
-
-\large
-
-[https://github.com/alsar/stack-ip-restrict](https://github.com/alsar/stack-ip-restrict)
--->
-
-
-# Principle of Stack
-
-\centering
-\Huge
-
-_Request_
-$\to$ 
-
-__DecoratingApp(App)__ 
-
-$\to$
-_Response_
 
 
 # StackPHP is ...
@@ -338,16 +229,220 @@ StackPHP is a Toolset and Conventions
 __More__ can be found here: _[stackphp.com/specs](http://stackphp.com/specs/)_.
 
 
-# Lets check out the toolbox!
+<!--
+#
+
+Needed composer packages:
+
+\centering
+
+```
+{
+    "require": {
+        "symfony/http-kernel": "~2.0",
+        "symfony/http-foundation": "~2.0"
+    }
+}
+```
+-->
+
+
+#
+
+\centering
+\Huge
+_Request_
+$\to$ 
+
+__AppKernel__ 
+
+$\to$
+_Response_
+
+
+
+# 
+
+\centering
+\Huge
+
+_Request_
+$\to$ 
+
+__Middleware(AppKernel)__ 
+
+$\to$
+_Response_
+
+
+
+# Middlewares
+
+Adding functionality by decorating Application.
+
+\centering
+
+![](img/clack-middleware_with_dpi.png)
+
+
+
+# Example Middleware
+
+\centering
+
+\tiny
+
+```php
+<?php
+
+class ExampleMiddleware implements HttpKernelInterface
+{
+    private $app;
+
+    public function __construct(HttpKernelInterface $app)
+    {
+        $this->app = $app;
+    }
+
+    public function handle(Request $request)
+    {
+        // Before request
+        
+        $response = $this->app->handle($request, $type, $catch);
+        
+        // After response
+        
+        return $response;
+    }
+}
+```
+
+
+# How would you ....
+
+\centering
+\Huge
+
+restrict Access by IP?
+
+
+# With IpRestrict by Alsar
+
+\footnotesize
+
+```php
+<?php
+
+$kernel = new AppKernel();
+
+$kernel = new Alsar\Stack\IpRestrict(
+	$kernel, 
+	array('127.0.0.1', '192.168.0.1')
+);
+
+$response = $kernel->handle(Request::createFromGlobals());
+
+$response->send();
+```
+
+\large
+
+[https://github.com/alsar/stack-ip-restrict](https://github.com/alsar/stack-ip-restrict)
+
+
+
+
+# Source of IpRestrict
+
+\tiny
+
+```php
+<?php
+
+class IpRestrict implements HttpKernelInterface
+{
+    private $app;
+    private $allowedIps;
+
+    public function __construct(HttpKernelInterface $app, array $allowedIps)
+    {
+        $this->app = $app;
+        $this->allowedIps = $allowedIps;
+    }
+
+    public function handle(Request $request)
+    {
+        $ip = $request->getClientIp();
+
+        if (!in_array($ip, $this->allowedIps)) {
+            return new Response(sprintf('IP %s is not allowed.', $ip), 403);
+        }
+
+        return $this->app->handle($request, $type, $catch);
+    }
+}
+```
+
+\large
+
+[https://github.com/alsar/stack-ip-restrict](https://github.com/alsar/stack-ip-restrict)
+
+
+# List of middlewares
+
+**[stackphp.com/middlewares/](http://stackphp.com/middlewares/)**
+
+\begin{multicols}{2}
+\begin{itemize}
+
+\item HttpCache \textit{(by Symfony)}
+\item CookieGuard \textit{(by Laravel)}
+\item GeoIp \textit{(by geocoder)}
+\item IpRestrict \textit{(by alsar)}
+\item Backstage \textit{(by atst)}
+\item OAuth \textit{(by igorw)}
+\item Basic Authentication \textit{(by dflydev)}
+\item Hawk \textit{(by dflydev)}
+\item CORS \textit{(by asm89)}
+\item Robots \textit{(by dongilbert)}
+\item Negotiation \textit{(by wildurand)}
+\item Honeypot \textit{(by CHH)}
+\item Turbolinks \textit{(by Helthe)}
+\item Logger \textit{(by h4cc)}
+\item \textit{...}
+
+\end{itemize}
+\end{multicols}
+
+
+# Middleware usage
+
+* Authentification
+* Authorization
+* Error/Exception Handling
+* Assets
+* Debug Toolbar
+* Signed Cookies
+* Force SSL
+* ...
+
+
+
+
+#
+\centering
+
+\Huge Toolbox
 
 \includegraphics[width=0.28\textwidth]{img/toolbox_with_dpi.jpg}
 
+<!--
 * Builder
 * Run
 * Session
 * URL Map
 * Lazy Kernel
-
+-->
 
 
 # Toolbox: Builder
@@ -464,76 +559,20 @@ $map = array(
 ```
 
 
-# Middlewares
-
-Adding functionality by decorating Application.
-
-\centering
-
-![](img/clack-middleware_with_dpi.png)
 
 
-# Example Middleware
-
-\centering
-
-\tiny
-
-```php
-<?php
-
-class MyMiddleware implements HttpKernelInterface
-{
-    private $app;
-
-    public function __construct(HttpKernelInterface)
-    {
-        $this->app = $app;
-    }
-
-    public function handle(Request $request, $type = self::MASTER_REQUEST, $catch = true)
-    {
-        // Before request
-        
-        $response = $this->app->handle($request, $type, $catch);
-        
-        // After response
-        
-        return $response;
-    }
-}
-```
-
-
+<!--
 # What the Stack logo means
 
 ![](img/stack_logo_explained_with_dpi.png)
 
+-->
 
-# List of middlewares
+# 
+\centering
+\Huge Are there
 
-**[stackphp.com/middlewares/](http://stackphp.com/middlewares/)**
-
-\begin{multicols}{2}
-\begin{itemize}
-
-\item HttpCache \textit{(by Symfony)}
-\item CookieGuard \textit{(by Laravel)}
-\item GeoIp \textit{(by geocoder)}
-\item IpRestrict \textit{(by alsar)}
-\item Backstage \textit{(by atst)}
-\item OAuth \textit{(by igorw)}
-\item Basic Authentication \textit{(by dflydev)}
-\item Hawk \textit{(by dflydev)}
-\item CORS \textit{(by asm89)}
-\item Robots \textit{(by dongilbert)}
-\item Negotiation \textit{(by wildurand)}
-\item Honeypot \textit{(by CHH)}
-\item Turbolinks \textit{(by Helthe)}
-\item Logger \textit{(by h4cc)}
-
-\end{itemize}
-\end{multicols}
+\Huge Stackable Apps?
 
 
 # List of Apps using HttpKernelInterface
@@ -543,22 +582,34 @@ class MyMiddleware implements HttpKernelInterface
 \begin{multicols}{2}
 \begin{itemize}
 
-\item Sculpin
+
 \item Symfony
+\item Silex
+\item Laravel
 \item Proem Framework
+\item Pagekit
+
 \item phpBB
 \item Drupal
+\item Bolt
+
 \item Thelia
 \item Shopware
-\item Silex
-\item Pagekit
-\item Laravel
+
+\item Sculpin
+
+\item \textit{...}
 
 \end{itemize}
 \end{multicols}
 
 
+#
 
+\centering
+\Huge And PSR-7 ?
+
+<!--
 # What about PSR-7 ?
 
 StackPHP is currently using `symfony` packages.
@@ -568,6 +619,7 @@ StackPHP is currently using `symfony` packages.
 A equal PSR-Standard is proposed, but not yet ready :(
 
 But let me show you the drafts...
+-->
 
 
 # PSR-7 MessageInterface DRAFT
@@ -662,13 +714,53 @@ One day, using StackPHP we will:
 
 * Using __Http as a interface__ with HttpKernelInterface.
 
-* __Compose__ simple Applications.
-
 * Add functionality through __Middlewares__.
 
 * Build __framework-agnostic features__ based on HTTP.
 
 
+# When writing what?
+\centering
+\Huge
+
+Library?
+
+Bundle/Module/ServiceProvider?
+
+Middleware?
+
+
+
+
+
+# Real world scenario #1
+\centering
+\Huge Request/Response logger
+
+\large Packagist: [silpion/stack-logger](https://github.com/h4cc/StackLogger)
+
+
+# Real world scenario #2
+\centering
+\Huge REST Fileserver
+
+\large Packagist: [h4cc/stack-flysystem](https://github.com/h4cc/stack-flysystem)
+
+
+# Real world scenario #3
+\centering
+\Huge ReactPHP Adapter
+
+\large Packagist: [yosymfony/httpserver](https://github.com/yosymfony/HttpServer)
+
+
+# Real world scenario #4
+\centering
+\Huge Modularized API
+
+
+
+<!--
 # Some stuff i did with StackPHP
 
 * Request/Response logger: __[silpion/stack-logger](https://github.com/h4cc/StackLogger)__
@@ -685,6 +777,7 @@ One day, using StackPHP we will:
 
 * _More not yet released stuff ..._
 
+-->
 
 <!--
 # 
@@ -742,3 +835,11 @@ Julius Beckmann
 
 \Huge
 Questions?
+
+#
+
+\centering
+
+\Huge
+KThxBye! :)
+
